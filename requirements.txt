@@ -1,0 +1,6 @@
+# LMT Overlay Pipeline - dependencies
+# Pinned to major-version-compatible ranges known to work together.
+
+numpy>=1.24,<2.0
+opencv-python>=4.8,<5.0
+tqdm>=4.66,<5.0
