@@ -58,7 +58,7 @@ ANIMAL_COLORS_BGR: Dict[int, Tuple[int, int, int]] = {
 }
 ANIMAL_COLOR_FALLBACK_BGR: Tuple[int, int, int] = (255, 0, 255)
 
-MASK_ALPHA: float = 0.45
+MASK_ALPHA: float = 0.45    # 0 = invisible, 1 = fully opaque fill
 DRAW_MASK_OUTLINE: bool = True
 MASK_OUTLINE_THICKNESS: int = 1
 
