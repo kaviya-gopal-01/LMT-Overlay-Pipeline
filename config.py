@@ -53,10 +53,10 @@ MASK_STRICT_SIZE_VALIDATION: bool = True
 ANIMAL_COLORS_BGR: Dict[int, Tuple[int, int, int]] = {
     1: (0, 0, 255),      # Red
     2: (0, 200, 0),      # Green
-    3: (255, 0, 0),      # Blue
+    3: (255, 0, 255),      # Purple
     4: (0, 220, 255),    # Yellow
 }
-ANIMAL_COLOR_FALLBACK_BGR: Tuple[int, int, int] = (255, 0, 255)
+ANIMAL_COLOR_FALLBACK_BGR: Tuple[int, int, int] = (255, 255, 255) # White
 
 MASK_ALPHA: float = 0.45    # 0 = invisible, 1 = fully opaque fill
 DRAW_MASK_OUTLINE: bool = True
