@@ -58,17 +58,32 @@ ANIMAL_COLORS_BGR: Dict[int, Tuple[int, int, int]] = {
 }
 ANIMAL_COLOR_FALLBACK_BGR: Tuple[int, int, int] = (255, 255, 255) # White
 
-MASK_ALPHA: float = 0.45    # 0 = invisible, 1 = fully opaque fill
+# Alpha blend weight for the mask fill (0 = invisible, 1 = fully opaque).
+MASK_ALPHA: float = 0.45
+
+# Outline drawn around the mask contour for legibility even when MASK_ALPHA
+# is low or the mask sits over a similarly colored background.
 DRAW_MASK_OUTLINE: bool = True
 MASK_OUTLINE_THICKNESS: int = 1
 
+# Pose point markers (front / back / mass center) and posture text overlay.
 DRAW_POSE_MARKERS: bool = True
 POSE_MARKER_RADIUS: int = 3
-POSE_MARKER_THICKNESS: int = -1
+POSE_MARKER_THICKNESS: int = -1  # filled
 
 DRAW_POSTURE_LABEL: bool = True
 POSTURE_LABEL_FONT_SCALE: float = 0.4
 POSTURE_LABEL_THICKNESS: int = 1
+
+# Global SQLite frame number, burned into every output frame. Independent
+# of per-animal detections -- drawn once per frame regardless of how many
+# (if any) animals were detected in it, which is why it's a frame-level
+# setting rather than something inside render_detection's per-animal loop.
+DRAW_GLOBAL_FRAME_NUMBER: bool = True
+FRAME_NUMBER_COLOR_BGR: Tuple[int, int, int] = (255, 255, 255)
+FRAME_NUMBER_FONT_SCALE: float = 0.5
+FRAME_NUMBER_THICKNESS: int = 1
+FRAME_NUMBER_MARGIN_PX: int = 10  # distance from the bottom-left corner
 
 # ---------------------------------------------------------------------------
 # Video output
