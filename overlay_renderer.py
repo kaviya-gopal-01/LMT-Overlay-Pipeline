@@ -199,6 +199,30 @@ def render_detection(frame: np.ndarray, detection: DetectionRow) -> None:
         )
         _draw_posture_label(frame, detection.animal_id, parsed, color, anchor_x, anchor_y)
 
+def draw_global_frame_number(frame: np.ndarray, global_frame: int) -> None:
+    """
+    Burn the global SQLite frame number into the bottom-left corner of the
+    frame. Drawn unconditionally per frame (not per-detection), so it's
+    visible even on frames with zero detected animals -- useful for
+    scrubbing to a specific DB row while reviewing output footage.
+    """
+    if not config.DRAW_GLOBAL_FRAME_NUMBER:
+        return
+
+    text = f"frame {global_frame}"
+    frame_h = frame.shape[0]
+    origin = (config.FRAME_NUMBER_MARGIN_PX, frame_h - config.FRAME_NUMBER_MARGIN_PX)
+
+    cv2.putText(
+        frame,
+        text,
+        origin,
+        cv2.FONT_HERSHEY_SIMPLEX,
+        config.FRAME_NUMBER_FONT_SCALE,
+        config.FRAME_NUMBER_COLOR_BGR,
+        config.FRAME_NUMBER_THICKNESS,
+        cv2.LINE_AA,
+    )
 
 def render_frame(frame: np.ndarray, detections: Iterable[DetectionRow]) -> np.ndarray:
     """
