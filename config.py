@@ -80,7 +80,7 @@ POSTURE_LABEL_THICKNESS: int = 1
 # (if any) animals were detected in it, which is why it's a frame-level
 # setting rather than something inside render_detection's per-animal loop.
 DRAW_GLOBAL_FRAME_NUMBER: bool = True
-FRAME_NUMBER_COLOR_BGR: Tuple[int, int, int] = (255, 255, 255)
+FRAME_NUMBER_COLOR_BGR: Tuple[int, int, int] = (0, 0, 255) # Red
 FRAME_NUMBER_FONT_SCALE: float = 0.5
 FRAME_NUMBER_THICKNESS: int = 1
 FRAME_NUMBER_MARGIN_PX: int = 10  # distance from the bottom-left corner
