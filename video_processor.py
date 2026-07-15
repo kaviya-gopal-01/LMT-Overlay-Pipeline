@@ -61,8 +61,15 @@ class VideoInfo:
 
     @property
     def output_path(self) -> Path:
-        stem = self.path.stem
-        return config.OUTPUT_VIDEO_DIR / f"{stem}{config.OUTPUT_VIDEO_SUFFIX}.mp4"
+        """
+        Output filename is derived from already-parsed, trusted fields
+        (start_frame, original extension) rather than string-manipulating
+        the input filename. This generalizes cleanly regardless of the
+        raw video's naming prefix: 'video_noOverlay_t18024.mp4',
+        'cam2_raw_noOverlay_t18024.mp4', and 'anything_t18024.mp4' all
+        produce the same output name: 'video_t18024.mp4'.
+        """
+        return config.OUTPUT_VIDEO_DIR / f"video_t{self.start_frame}{self.path.suffix}"
 
 
 def _extract_start_frame(video_path: Path) -> Optional[int]:

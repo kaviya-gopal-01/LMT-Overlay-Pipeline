@@ -88,7 +88,6 @@ FRAME_NUMBER_MARGIN_PX: int = 10  # distance from the bottom-left corner
 # ---------------------------------------------------------------------------
 # Video output
 # ---------------------------------------------------------------------------
-OUTPUT_VIDEO_SUFFIX: str = "_corrected"
 OUTPUT_FOURCC: str = "mp4v"
 OUTPUT_FPS: float = RAW_VIDEO_FPS
 
