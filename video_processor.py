@@ -171,10 +171,6 @@ def process_single_video(conn: sqlite3.Connection, video: VideoInfo) -> None:
         cap.release()
         raise VideoProcessingError(f"Could not open VideoWriter for: {video.output_path}")
 
-    # Local-frame chunk size derived from the configured global-frame
-    # chunk size, so a single chunk's detection query covers roughly the
-    # same amount of wall-clock recording time regardless of
-    # FRAME_CONVERSION.
     local_chunk_size = max(1, config.DB_QUERY_CHUNK_FRAMES // config.FRAME_CONVERSION)
 
     frames_written = 0
@@ -206,6 +202,7 @@ def process_single_video(conn: sqlite3.Connection, video: VideoInfo) -> None:
                 global_frame = video.start_frame + local_frame * config.FRAME_CONVERSION
                 detections = detections_by_frame.get(global_frame, [])
                 overlay_renderer.render_frame(frame, detections)
+                overlay_renderer.draw_global_frame_number(frame, global_frame)
 
                 writer.write(frame)
                 frames_written += 1
@@ -218,7 +215,6 @@ def process_single_video(conn: sqlite3.Connection, video: VideoInfo) -> None:
             progress.close()
 
     logger.info("Finished %s: wrote %d frames to %s", video.path.name, frames_written, video.output_path)
-
 
 def process_all_videos(conn: sqlite3.Connection, videos: List[VideoInfo]) -> None:
     """
