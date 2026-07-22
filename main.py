@@ -6,13 +6,15 @@ CLI entrypoint for the LMT overlay pipeline.
 
 Usage:
     python main.py
-    python main.py --input-dir /data/exp42/raw --db /data/exp42/tracking.sqlite --output-dir /data/exp42/corrected
-    python main.py --no-progress --log-level DEBUG
+    python main.py --output-base-dir /data/results --no-progress --log-level DEBUG
 
-All arguments are optional; any omitted argument falls back to config.py's
-default (itself overridable via the LMT_INPUT_DIR / LMT_DATABASE_PATH /
-LMT_OUTPUT_DIR environment variables). CLI arguments take precedence over
-both.
+On startup, this launches two file-picker dialogs (via gui_selector.py):
+first to select the LMT SQLite database, then to select one or more raw
+video files. Selected files may live anywhere on disk, in any folder
+structure -- there is no assumption of a fixed project layout. Each run
+writes its output into a fresh, uniquely timestamped subfolder under
+--output-base-dir (default: ./output), so repeated runs never overwrite
+each other's results.
 """
 
 from __future__ import annotations
@@ -21,10 +23,12 @@ import argparse
 import logging
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import config
 import database
+import gui_selector
 import video_processor
 
 logger = logging.getLogger(__name__)
@@ -35,16 +39,14 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         description="Render corrected LMT overlays (from SQLite ground truth) onto raw videos.",
     )
     parser.add_argument(
-        "--input-dir", type=Path, default=config.INPUT_VIDEO_DIR,
-        help=f"Directory containing raw video_noOverlay_t*.mp4 files (default: {config.INPUT_VIDEO_DIR})",
-    )
-    parser.add_argument(
-        "--db", type=Path, default=config.DATABASE_PATH,
-        help=f"Path to the LMT SQLite database (default: {config.DATABASE_PATH})",
-    )
-    parser.add_argument(
-        "--output-dir", type=Path, default=config.OUTPUT_VIDEO_DIR,
-        help=f"Directory to write corrected videos into (default: {config.OUTPUT_VIDEO_DIR})",
+        "--output-base-dir",
+        type=Path,
+        default=config.OUTPUT_VIDEO_DIR,
+        help=(
+            "Base directory under which each run creates its own "
+            f"timestamped output subfolder (default: {config.OUTPUT_VIDEO_DIR}). "
+            "E.g. <base>/2026-07-20_17-34-12/video_t18024.mp4"
+        ),
     )
     parser.add_argument(
         "--no-progress", action="store_true",
@@ -65,21 +67,33 @@ def _configure_logging(level_name: str) -> None:
     )
 
 
-def _apply_cli_overrides(args: argparse.Namespace) -> None:
-    """Push CLI-provided paths/flags into config, which the rest of the
-    pipeline reads from module-level constants."""
-    config.INPUT_VIDEO_DIR = args.input_dir.resolve()
-    config.DATABASE_PATH = args.db.resolve()
-    config.OUTPUT_VIDEO_DIR = args.output_dir.resolve()
-    if args.no_progress:
-        config.PROGRESS_BAR = False
+def _make_unique_output_dir(base_dir: Path) -> Path:
+    """
+    Build this run's output directory as <base_dir>/<timestamp>. If that
+    exact folder somehow already exists (two runs started within the
+    same second -- unlikely but not impossible), append a numeric suffix
+    until a free name is found. This is what guarantees "never silently
+    overwrite previous outputs": we never write into a folder that
+    already exists.
+    """
+    timestamp = datetime.now().strftime(config.OUTPUT_TIMESTAMP_FORMAT)
+    candidate = base_dir / timestamp
+    if not candidate.exists():
+        return candidate
+
+    suffix = 2
+    while True:
+        candidate = base_dir / f"{timestamp}_{suffix}"
+        if not candidate.exists():
+            return candidate
+        suffix += 1
 
 
 def _sanity_check_frame_overlap(conn, videos: list[video_processor.VideoInfo]) -> None:
     """
-    Warn (but don't abort) if the discovered videos' global frame ranges
+    Warn (but don't abort) if the selected videos' global frame ranges
     don't overlap the DETECTION table's frame range at all -- usually
-    means a mismatched database/video-directory pairing.
+    means the wrong database was picked for these videos.
     """
     if not videos:
         return
@@ -95,9 +109,9 @@ def _sanity_check_frame_overlap(conn, videos: list[video_processor.VideoInfo]) -
 
     if video_max <= db_min or video_min >= db_max:
         logger.warning(
-            "Discovered videos span global frames [%d, %d) but DETECTION "
+            "Selected videos span global frames [%d, %d) but DETECTION "
             "spans [%d, %d] -- these do not overlap at all. Double-check "
-            "that --input-dir and --db point at the same experiment.",
+            "you selected the right database for these videos.",
             video_min, video_max, db_min, db_max,
         )
 
@@ -105,7 +119,25 @@ def _sanity_check_frame_overlap(conn, videos: list[video_processor.VideoInfo]) -
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
     _configure_logging(args.log_level)
-    _apply_cli_overrides(args)
+
+    if args.no_progress:
+        config.PROGRESS_BAR = False
+
+    try:
+        database_path, video_paths = gui_selector.select_database_and_videos()
+    except ImportError as exc:
+        logger.error(
+            "Tkinter is not available (%s). On Debian/Ubuntu, install it with: "
+            "sudo apt-get install python3-tk. On other platforms, reinstall "
+            "Python with Tk support enabled.", exc,
+        )
+        return 1
+    except gui_selector.SelectionCancelled as exc:
+        logger.warning("Selection cancelled: %s Nothing was processed.", exc)
+        return 1
+
+    config.DATABASE_PATH = database_path
+    config.OUTPUT_VIDEO_DIR = _make_unique_output_dir(args.output_base_dir.resolve())
 
     try:
         config.validate_config()
@@ -113,13 +145,17 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("%s", exc)
         return 1
 
-    logger.info("Discovering raw videos in %s", config.INPUT_VIDEO_DIR)
-    videos = video_processor.discover_videos(config.INPUT_VIDEO_DIR)
+    logger.info("Using database: %s", config.DATABASE_PATH)
+    logger.info("Output directory for this run: %s", config.OUTPUT_VIDEO_DIR)
+
+    videos = video_processor.discover_videos_from_paths(video_paths)
     if not videos:
-        logger.error("No usable videos found; nothing to do.")
+        logger.error("None of the selected video files were usable; nothing to do.")
         return 1
-    logger.info("Discovered %d video(s), global frame range [%d, %d)",
-                len(videos), videos[0].start_frame, videos[-1].end_frame)
+    logger.info(
+        "Processing %d video(s), global frame range [%d, %d)",
+        len(videos), videos[0].start_frame, videos[-1].end_frame,
+    )
 
     start_time = time.monotonic()
     try:

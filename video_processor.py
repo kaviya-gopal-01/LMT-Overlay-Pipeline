@@ -69,7 +69,8 @@ class VideoInfo:
         'cam2_raw_noOverlay_t18024.mp4', and 'anything_t18024.mp4' all
         produce the same output name: 'video_t18024.mp4'.
         """
-        return config.OUTPUT_VIDEO_DIR / f"video_t{self.start_frame}{self.path.suffix}"
+        ext = self.path.suffix  # preserve original extension, e.g. ".mp4"
+        return config.OUTPUT_VIDEO_DIR / f"{config.OUTPUT_VIDEO_PREFIX}_t{self.start_frame}{ext}"
 
 
 def _extract_start_frame(video_path: Path) -> Optional[int]:
@@ -120,12 +121,43 @@ def probe_video(video_path: Path) -> VideoInfo:
     )
 
 
+def _deduplicate_by_start_frame(videos: List[VideoInfo]) -> List[VideoInfo]:
+    """
+    Two videos sharing the same start_frame would produce the SAME output
+    filename ("video_t<N>.ext") and silently overwrite each other, since
+    output naming is keyed only by start_frame (not by original filename
+    or original folder). Shared by both discover_videos() and
+    discover_videos_from_paths() so this protection applies regardless of
+    how the video list was assembled.
+    """
+    seen_start_frames: Dict[int, Path] = {}
+    deduplicated: List[VideoInfo] = []
+    for video in videos:
+        prior = seen_start_frames.get(video.start_frame)
+        if prior is not None:
+            logger.error(
+                "Duplicate start_frame=%d between %s and %s; skipping %s "
+                "to avoid overwriting output from %s. Rename or deselect "
+                "one of these raw files if both are actually needed.",
+                video.start_frame, prior.name, video.path.name, video.path.name, prior.name,
+            )
+            continue
+        seen_start_frames[video.start_frame] = video.path
+        deduplicated.append(video)
+    return deduplicated
+
+
 def discover_videos(input_dir: Path = config.INPUT_VIDEO_DIR) -> List[VideoInfo]:
     """
     Find all raw videos matching config.VIDEO_GLOB_PATTERN under
     input_dir, probe each for metadata, and return them sorted by global
     start frame. Videos whose filename or file itself can't be parsed are
     logged and skipped rather than aborting discovery for the rest.
+
+    This directory-glob discovery path is kept for scripted/headless use;
+    the GUI flow in main.py uses discover_videos_from_paths() instead,
+    since Tkinter's file picker returns an explicit list of files that
+    may span multiple folders, not a single directory to glob.
     """
     candidates = sorted(input_dir.glob(config.VIDEO_GLOB_PATTERN))
     if not candidates:
@@ -142,7 +174,31 @@ def discover_videos(input_dir: Path = config.INPUT_VIDEO_DIR) -> List[VideoInfo]
             logger.error("Skipping unusable video %s: %s", path, exc)
 
     videos.sort(key=lambda v: v.start_frame)
-    return videos
+    return _deduplicate_by_start_frame(videos)
+
+
+def discover_videos_from_paths(video_paths: List[Path]) -> List[VideoInfo]:
+    """
+    Probe an explicit, user-supplied list of video file paths -- e.g.
+    returned by gui_selector.select_database_and_videos() -- rather than
+    globbing a single directory. Videos may live in different folders;
+    each path is probed independently via the same probe_video() used by
+    discover_videos(), so filename parsing, codec checks, and error
+    handling are identical between the two discovery paths.
+
+    Same duplicate-start_frame protection as discover_videos() (see
+    _deduplicate_by_start_frame's docstring for why that matters).
+    """
+    videos: List[VideoInfo] = []
+    for path in video_paths:
+        path = Path(path)
+        try:
+            videos.append(probe_video(path))
+        except VideoProcessingError as exc:
+            logger.error("Skipping unusable video %s: %s", path, exc)
+
+    videos.sort(key=lambda v: v.start_frame)
+    return _deduplicate_by_start_frame(videos)
 
 
 def _iter_local_chunks(frame_count: int, chunk_size: int):
@@ -222,6 +278,7 @@ def process_single_video(conn: sqlite3.Connection, video: VideoInfo) -> None:
             progress.close()
 
     logger.info("Finished %s: wrote %d frames to %s", video.path.name, frames_written, video.output_path)
+
 
 def process_all_videos(conn: sqlite3.Connection, videos: List[VideoInfo]) -> None:
     """
