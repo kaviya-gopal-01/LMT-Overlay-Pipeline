@@ -8,8 +8,8 @@ frame number.
 
 The pipeline exists because LMT's own live overlay is generated in real
 time, during acquisition, and is not always correct: it reflects whatever
-the tracker believed *at that instant* (visual information) , not the corrected, offline-processed 
-result (based on the corrected RFID location) that ends up in the SQLite database afterward. The SQLite database
+the tracker detected *at that instant*, not the corrected, offline-processed 
+result that ends up in the SQLite database afterward. The SQLite database
 is treated as ground truth throughout this pipeline; the raw, overlay-free
 videos are the only thing ever drawn on, and are never modified in place, a
 fresh corrected copy is always written to a new output file.
@@ -333,8 +333,7 @@ Decodes the `boolMaskData` payload from a parsed `ROIBounds` into a 2D
 NumPy segmentation mask. The encoding, colon-separated hex bytes,
 zlib-compressed (Java `Deflater` default level), decompressing to exactly
 `width * height` bytes of `{0, 1}` values in row-major order, was
-determined empirically against real sample data (not assumed from
-documentation, since none exists publicly for this field) and is
+determined empirically against real sample data and is
 documented in full in this module's docstring.
 
 ### Inputs
