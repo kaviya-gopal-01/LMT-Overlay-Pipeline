@@ -6,7 +6,7 @@ read-only ground truth: connections are opened in SQLite's URI read-only
 mode so the pipeline can never accidentally mutate the source of truth.
 
 Provides chunked, indexed range queries over DETECTION so video_processor
-can stream through a 24-hour recording without loading the full detection
+can stream through a recording without loading the full detection
 history into memory at once.
 """
 
