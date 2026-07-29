@@ -36,10 +36,7 @@ VIDEO_FILENAME_PATTERN = re.compile(r"_t(\d+)\.mp4$", re.IGNORECASE)
 # candidates to "anything ending in _t<something>.mp4". VIDEO_FILENAME_PATTERN
 # (a real regex, checked per-file in probe_video) is the actual source of
 # truth for "is this a valid raw video filename" -- it rejects anything
-# where <something> isn't purely digits. This lets discovery accept any
-# prefix ("video_noOverlay_t18024.mp4", "cam3_raw_noOverlay_t25000.mp4",
-# "anything_t18024.mp4"), matching the fact that output_path already
-# renames all of them to a uniform "video_t<N>.mp4" regardless of input prefix.
+# where <something> isn't purely digits. 
 VIDEO_GLOB_PATTERN = "*_t*.mp4"
 
 FRAME_CONVERSION: int = 2
