@@ -111,14 +111,7 @@ def probe_video(video_path: Path) -> VideoInfo:
     if width <= 0 or height <= 0:
         raise VideoProcessingError(f"Video reports invalid dimensions ({width}x{height}): {video_path}")
 
-    return VideoInfo(
-        path=video_path,
-        start_frame=start_frame,
-        frame_count=frame_count,
-        fps=fps,
-        width=width,
-        height=height,
-    )
+    return VideoInfo(path=video_path, start_frame=start_frame, frame_count=frame_count, fps=fps, width=width, height=height,)
 
 
 def _deduplicate_by_start_frame(videos: List[VideoInfo]) -> List[VideoInfo]:
@@ -227,9 +220,7 @@ def process_single_video(conn: sqlite3.Connection, video: VideoInfo) -> None:
         raise VideoProcessingError(f"Could not (re)open video for processing: {video.path}")
 
     fourcc = cv2.VideoWriter_fourcc(*config.OUTPUT_FOURCC)
-    writer = cv2.VideoWriter(
-        str(video.output_path), fourcc, config.OUTPUT_FPS, (video.width, video.height)
-    )
+    writer = cv2.VideoWriter(str(video.output_path), fourcc, config.OUTPUT_FPS, (video.width, video.height))
     if not writer.isOpened():
         cap.release()
         raise VideoProcessingError(f"Could not open VideoWriter for: {video.output_path}")
