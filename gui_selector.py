@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 class SelectionCancelled(Exception):
     """Raised when the user closes/cancels a file selection dialog."""
 
-
 def _load_settings() -> dict:
     if not config.SETTINGS_FILE_PATH.exists():
         return {}
@@ -77,9 +76,7 @@ def select_database_and_videos() -> Tuple[Path, List[Path]]:
 
     try:
         last_db = settings.get("last_database_path")
-        initial_db_dir = (
-            str(Path(last_db).parent) if last_db and Path(last_db).parent.is_dir() else None
-        )
+        initial_db_dir = (str(Path(last_db).parent) if last_db and Path(last_db).parent.is_dir() else None)
 
         db_path_str = filedialog.askopenfilename(
             title="Select the LMT SQLite database",
@@ -88,15 +85,11 @@ def select_database_and_videos() -> Tuple[Path, List[Path]]:
             parent=root,
         )
         if not db_path_str:
-            raise SelectionCancelled(
-                "No database file was selected (dialog was cancelled)."
-            )
+            raise SelectionCancelled("No database file was selected (dialog was cancelled).")
         database_path = Path(db_path_str).resolve()
 
         last_video_dir = settings.get("last_video_dir")
-        initial_video_dir = (
-            last_video_dir if last_video_dir and Path(last_video_dir).is_dir() else None
-        )
+        initial_video_dir = (last_video_dir if last_video_dir and Path(last_video_dir).is_dir() else None)
 
         video_path_strs = filedialog.askopenfilenames(
             title="Select one or more raw video files",
@@ -105,9 +98,7 @@ def select_database_and_videos() -> Tuple[Path, List[Path]]:
             parent=root,
         )
         if not video_path_strs:
-            raise SelectionCancelled(
-                "No video files were selected (dialog was cancelled)."
-            )
+            raise SelectionCancelled("No video files were selected (dialog was cancelled).")
         video_paths = [Path(p).resolve() for p in video_path_strs]
     finally:
         root.destroy()
