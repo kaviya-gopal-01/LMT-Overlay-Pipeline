@@ -33,11 +33,9 @@ import video_processor
 
 logger = logging.getLogger(__name__)
 
-
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Render corrected LMT overlays (from SQLite ground truth) onto raw videos.",
-    )
+    parser = argparse.ArgumentParser(description="Render corrected LMT overlays (from SQLite ground truth) onto raw videos.",)
+    
     parser.add_argument(
         "--output-base-dir",
         type=Path,
