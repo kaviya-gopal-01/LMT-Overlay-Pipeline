@@ -43,22 +43,18 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-
 class XmlParseError(ValueError):
     """Raised when a DETECTION.DATA XML blob cannot be parsed at all."""
-
 
 @dataclass(frozen=True, slots=True)
 class ROIBounds:
     """Bounding box + raw mask payload for a single detection's ROI."""
-
     x: int
     y: int
     w: int
     h: int
     bool_mask_data: str
     name: Optional[str] = None
-
 
 @dataclass(frozen=True, slots=True)
 class ParsedDetectionData:
@@ -89,7 +85,6 @@ class ParsedDetectionData:
     def has_mask(self) -> bool:
         return self.roi is not None
 
-
 def _to_float(value: Optional[str]) -> Optional[float]:
     if value is None:
         return None
@@ -97,7 +92,6 @@ def _to_float(value: Optional[str]) -> Optional[float]:
         return float(value)
     except (TypeError, ValueError):
         return None
-
 
 def _to_int(value: Optional[str]) -> Optional[int]:
     if value is None:
@@ -110,12 +104,10 @@ def _to_int(value: Optional[str]) -> Optional[int]:
         except (TypeError, ValueError):
             return None
 
-
 def _to_bool(value: Optional[str]) -> bool:
     if value is None:
         return False
     return str(value).strip().lower() == "true"
-
 
 def _parse_roi(roi_elem: ET.Element) -> Optional[ROIBounds]:
     def child_text(tag: str) -> Optional[str]:
@@ -137,24 +129,14 @@ def _parse_roi(roi_elem: ET.Element) -> Optional[ROIBounds]:
         return None
 
     if bounds_w <= 0 or bounds_h <= 0:
-        logger.debug(
-            "ROI bounds non-positive (w=%s, h=%s); treating as no mask available.",
-            bounds_w, bounds_h,
-        )
+        logger.debug("ROI bounds non-positive (w=%s, h=%s); treating as no mask available.", bounds_w, bounds_h,)
         return None
 
     if not mask_data:
         logger.debug("ROI present with valid bounds but no boolMaskData payload.")
         return None
 
-    return ROIBounds(
-        x=bounds_x,
-        y=bounds_y,
-        w=bounds_w,
-        h=bounds_h,
-        bool_mask_data=mask_data,
-        name=name,
-    )
+    return ROIBounds(x=bounds_x, y=bounds_y, w=bounds_w, h=bounds_h, bool_mask_data=mask_data, name=name,)
 
 
 def parse_detection_xml(xml_string: Optional[str]) -> ParsedDetectionData:
