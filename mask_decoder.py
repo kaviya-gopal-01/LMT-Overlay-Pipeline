@@ -51,7 +51,6 @@ import config
 
 logger = logging.getLogger(__name__)
 
-
 class MaskDecodeError(ValueError):
     """Raised when boolMaskData cannot be decoded into a valid mask."""
 
@@ -64,13 +63,7 @@ def _hex_tokens_to_bytes(hex_string: str, separator: str) -> bytes:
         raise MaskDecodeError(f"boolMaskData contains a non-hex token: {exc}") from exc
 
 
-def decode_bool_mask(
-    bool_mask_data: str,
-    width: int,
-    height: int,
-    *,
-    strict: bool = config.MASK_STRICT_SIZE_VALIDATION,
-) -> np.ndarray:
+def decode_bool_mask(bool_mask_data: str, width: int, height: int, *, strict: bool = config.MASK_STRICT_SIZE_VALIDATION,) -> np.ndarray:
     """
     Decode a boolMaskData string into a (height, width) uint8 array with
     values in {0, 1}, where 1 marks a foreground (mouse) pixel.
