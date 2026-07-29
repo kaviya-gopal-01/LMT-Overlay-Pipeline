@@ -22,7 +22,6 @@ import config
 
 logger = logging.getLogger(__name__)
 
-
 class DetectionRow:
     """Lightweight, attribute-access wrapper around a single DETECTION row."""
 
@@ -48,11 +47,9 @@ class DetectionRow:
     def __repr__(self) -> str:  # pragma: no cover
         return f"DetectionRow(frame={self.framenumber}, animal={self.animal_id})"
 
-
 def _readonly_uri(db_path: Path) -> str:
     posix_path = db_path.as_posix()
     return f"file:{posix_path}?mode=ro"
-
 
 @contextmanager
 def connect(db_path: Path | None = None) -> Iterator[sqlite3.Connection]:
@@ -69,7 +66,6 @@ def connect(db_path: Path | None = None) -> Iterator[sqlite3.Connection]:
     finally:
         conn.close()
 
-
 def has_index_on_framenumber(conn: sqlite3.Connection) -> bool:
     """Check whether an index covering DETECTION.FRAMENUMBER already
     exists. Used only to emit a performance warning -- this module never
@@ -83,7 +79,6 @@ def has_index_on_framenumber(conn: sqlite3.Connection) -> bool:
             return True
     return False
 
-
 def warn_if_unindexed(conn: sqlite3.Connection) -> None:
     if not has_index_on_framenumber(conn):
         logger.warning(
@@ -93,7 +88,6 @@ def warn_if_unindexed(conn: sqlite3.Connection) -> None:
             "(outside this read-only pipeline) with:\n"
             "  CREATE INDEX idx_detection_framenumber ON DETECTION(FRAMENUMBER);"
         )
-
 
 def fetch_detections_in_range(conn: sqlite3.Connection, start_frame: int, end_frame: int) -> List[DetectionRow]:
     """Fetch DETECTION rows with FRAMENUMBER in [start_frame, end_frame),
@@ -106,7 +100,6 @@ def fetch_detections_in_range(conn: sqlite3.Connection, start_frame: int, end_fr
     )
     cursor = conn.execute(query, (start_frame, end_frame))
     return [DetectionRow(row) for row in cursor.fetchall()]
-
 
 def iter_detection_chunks(conn: sqlite3.Connection, start_frame: int, end_frame: int, chunk_size: int = config.DB_QUERY_CHUNK_FRAMES,) -> Iterator[Dict[int, List[DetectionRow]]]:
     """Stream detections for [start_frame, end_frame) in fixed-size global
@@ -127,7 +120,6 @@ def iter_detection_chunks(conn: sqlite3.Connection, start_frame: int, end_frame:
 
         yield grouped
         chunk_start = chunk_end
-
 
 def get_global_frame_bounds(conn: sqlite3.Connection) -> tuple[int, int]:
     """Return (min_framenumber, max_framenumber) across DETECTION. Used by
