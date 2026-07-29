@@ -26,11 +26,7 @@ logger = logging.getLogger(__name__)
 class DetectionRow:
     """Lightweight, attribute-access wrapper around a single DETECTION row."""
 
-    __slots__ = (
-        "framenumber", "animal_id", "mass_x", "mass_y", "mass_z",
-        "front_x", "front_y", "front_z", "back_x", "back_y", "back_z",
-        "rearing", "look_up", "look_down", "data_xml",
-    )
+    __slots__ = ("framenumber", "animal_id", "mass_x", "mass_y", "mass_z", "front_x", "front_y", "front_z", "back_x", "back_y", "back_z", "rearing", "look_up", "look_down", "data_xml",)
 
     def __init__(self, row: sqlite3.Row):
         self.framenumber: int = row["FRAMENUMBER"]
@@ -99,9 +95,7 @@ def warn_if_unindexed(conn: sqlite3.Connection) -> None:
         )
 
 
-def fetch_detections_in_range(
-    conn: sqlite3.Connection, start_frame: int, end_frame: int
-) -> List[DetectionRow]:
+def fetch_detections_in_range(conn: sqlite3.Connection, start_frame: int, end_frame: int) -> List[DetectionRow]:
     """Fetch DETECTION rows with FRAMENUMBER in [start_frame, end_frame),
     ordered by FRAMENUMBER then ANIMALID."""
     columns_sql = ", ".join(config.DETECTION_COLUMNS)
@@ -114,12 +108,7 @@ def fetch_detections_in_range(
     return [DetectionRow(row) for row in cursor.fetchall()]
 
 
-def iter_detection_chunks(
-    conn: sqlite3.Connection,
-    start_frame: int,
-    end_frame: int,
-    chunk_size: int = config.DB_QUERY_CHUNK_FRAMES,
-) -> Iterator[Dict[int, List[DetectionRow]]]:
+def iter_detection_chunks(conn: sqlite3.Connection, start_frame: int, end_frame: int, chunk_size: int = config.DB_QUERY_CHUNK_FRAMES,) -> Iterator[Dict[int, List[DetectionRow]]]:
     """Stream detections for [start_frame, end_frame) in fixed-size global
     frame-number chunks, pre-grouped by FRAMENUMBER for O(1) lookup while
     iterating video frames. Bounds peak memory to one chunk regardless of
