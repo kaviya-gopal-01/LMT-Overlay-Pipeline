@@ -35,13 +35,7 @@ def get_animal_color(animal_id: int) -> Tuple[int, int, int]:
     return config.ANIMAL_COLORS_BGR.get(animal_id, config.ANIMAL_COLOR_FALLBACK_BGR)
 
 
-def _clip_roi_to_frame(
-    frame_shape: Tuple[int, int],
-    roi_x: int,
-    roi_y: int,
-    roi_w: int,
-    roi_h: int,
-) -> Tuple[int, int, int, int, int, int, int, int] | None:
+def _clip_roi_to_frame(frame_shape: Tuple[int, int], roi_x: int, roi_y: int, roi_w: int, roi_h: int,) -> Tuple[int, int, int, int, int, int, int, int] | None:
     """
     Compute the clipped intersection of an ROI with the frame.
 
@@ -70,13 +64,7 @@ def _clip_roi_to_frame(
     return clipped_x0, clipped_y0, clipped_x1, clipped_y1, mask_x0, mask_y0, mask_x1, mask_y1
 
 
-def _draw_mask(
-    frame: np.ndarray,
-    mask: np.ndarray,
-    roi_x: int,
-    roi_y: int,
-    color: Tuple[int, int, int],
-) -> None:
+def _draw_mask(frame: np.ndarray, mask: np.ndarray, roi_x: int, roi_y: int, color: Tuple[int, int, int],) -> None:
     """Alpha-blend the colorized mask onto `frame` in place, clipped to
     frame bounds, then optionally draw its contour outline."""
     clip = _clip_roi_to_frame(frame.shape[:2], roi_x, roi_y, mask.shape[1], mask.shape[0])
@@ -105,36 +93,16 @@ def _draw_mask(
             cv2.drawContours(frame, offset_contours, -1, color, config.MASK_OUTLINE_THICKNESS)
 
 
-def _draw_pose_markers(
-    frame: np.ndarray,
-    parsed: xml_parser.ParsedDetectionData,
-    color: Tuple[int, int, int],
-) -> None:
-    points = (
-        (parsed.front_x, parsed.front_y),
-        (parsed.back_x, parsed.back_y),
-        (parsed.mass_x, parsed.mass_y),
-    )
+def _draw_pose_markers(frame: np.ndarray, parsed: xml_parser.ParsedDetectionData, color: Tuple[int, int, int],) -> None:
+    points = ((parsed.front_x, parsed.front_y), (parsed.back_x, parsed.back_y), (parsed.mass_x, parsed.mass_y),)
+    
     for px, py in points:
         if px is None or py is None:
             continue
-        cv2.circle(
-            frame,
-            (int(round(px)), int(round(py))),
-            config.POSE_MARKER_RADIUS,
-            color,
-            config.POSE_MARKER_THICKNESS,
-        )
+        cv2.circle(frame, (int(round(px)), int(round(py))), config.POSE_MARKER_RADIUS, color, config.POSE_MARKER_THICKNESS,)
 
 
-def _draw_posture_label(
-    frame: np.ndarray,
-    animal_id: int,
-    parsed: xml_parser.ParsedDetectionData,
-    color: Tuple[int, int, int],
-    anchor_x: int,
-    anchor_y: int,
-) -> None:
+def _draw_posture_label(frame: np.ndarray, animal_id: int, parsed: xml_parser.ParsedDetectionData, color: Tuple[int, int, int], anchor_x: int, anchor_y: int,) -> None:
     flags = []
     if parsed.is_rearing:
         flags.append("REAR")
@@ -145,16 +113,7 @@ def _draw_posture_label(
 
     label = f"A{animal_id}" + (f" [{'|'.join(flags)}]" if flags else "")
     text_origin = (max(anchor_x, 0), max(anchor_y - 4, 10))
-    cv2.putText(
-        frame,
-        label,
-        text_origin,
-        cv2.FONT_HERSHEY_SIMPLEX,
-        config.POSTURE_LABEL_FONT_SCALE,
-        color,
-        config.POSTURE_LABEL_THICKNESS,
-        cv2.LINE_AA,
-    )
+    cv2.putText(frame, label, text_origin, cv2.FONT_HERSHEY_SIMPLEX, config.POSTURE_LABEL_FONT_SCALE, color, config.POSTURE_LABEL_THICKNESS, cv2.LINE_AA,)
 
 
 def render_detection(frame: np.ndarray, detection: DetectionRow) -> None:
@@ -191,12 +150,8 @@ def render_detection(frame: np.ndarray, detection: DetectionRow) -> None:
             _draw_mask(frame, mask, roi.x, roi.y, color)
 
     if config.DRAW_POSTURE_LABEL:
-        anchor_x = parsed.roi.x if parsed.has_mask else (
-            int(parsed.mass_x) if parsed.mass_x is not None else 0
-        )
-        anchor_y = parsed.roi.y if parsed.has_mask else (
-            int(parsed.mass_y) if parsed.mass_y is not None else 0
-        )
+        anchor_x = parsed.roi.x if parsed.has_mask else (int(parsed.mass_x) if parsed.mass_x is not None else 0)
+        anchor_y = parsed.roi.y if parsed.has_mask else (int(parsed.mass_y) if parsed.mass_y is not None else 0)
         _draw_posture_label(frame, detection.animal_id, parsed, color, anchor_x, anchor_y)
 
 def draw_global_frame_number(frame: np.ndarray, global_frame: int) -> None:
@@ -213,16 +168,7 @@ def draw_global_frame_number(frame: np.ndarray, global_frame: int) -> None:
     frame_h = frame.shape[0]
     origin = (config.FRAME_NUMBER_MARGIN_PX, frame_h - config.FRAME_NUMBER_MARGIN_PX)
 
-    cv2.putText(
-        frame,
-        text,
-        origin,
-        cv2.FONT_HERSHEY_SIMPLEX,
-        config.FRAME_NUMBER_FONT_SCALE,
-        config.FRAME_NUMBER_COLOR_BGR,
-        config.FRAME_NUMBER_THICKNESS,
-        cv2.LINE_AA,
-    )
+    cv2.putText(frame, text, origin, cv2.FONT_HERSHEY_SIMPLEX, config.FRAME_NUMBER_FONT_SCALE, config.FRAME_NUMBER_COLOR_BGR, config.FRAME_NUMBER_THICKNESS, cv2.LINE_AA,)
 
 def render_frame(frame: np.ndarray, detections: Iterable[DetectionRow]) -> np.ndarray:
     """
