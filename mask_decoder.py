@@ -5,8 +5,7 @@ Decodes the boolMaskData payload embedded in each detection's <ROI> XML
 block into a 2D numpy segmentation mask.
 
 ENCODING (determined empirically against a real sample row from this
-project's own database, not guessed from documentation, since none
-exists publicly for this field):
+project's own database):
 
     1. boolMaskData is a string of colon-separated hex byte values, e.g.
        "78:5e:ad:92:4b:16:...". Individual tokens may be 1 or 2 hex
