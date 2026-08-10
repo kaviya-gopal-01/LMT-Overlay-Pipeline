@@ -87,7 +87,20 @@ def probe_video(video_path: Path) -> VideoInfo:
     close it. The caller reopens the same path for actual streaming --
     this keeps discovery decoupled from processing and makes discovery
     failures (e.g. an unparseable filename) cheap to detect up front.
+
+    Extension is checked explicitly, and separately from the start-frame
+    pattern below, so an unsupported format (e.g. a stray .avi/.mov
+    picked via the GUI's "All files" fallback) fails with a message
+    about the format itself, rather than being folded into the generic
+    "couldn't find _t<digits>" message that VIDEO_FILENAME_PATTERN
+    produces for .mp4 files with a bad naming.
     """
+    if video_path.suffix.lower() != ".mp4":
+        raise VideoProcessingError(
+            f"Unsupported video format {video_path.suffix!r} for {video_path.name}: "
+            f"this pipeline only supports .mp4 input videos."
+        )
+
     start_frame = _extract_start_frame(video_path)
     if start_frame is None:
         raise VideoProcessingError(
