@@ -21,22 +21,139 @@ together in one pass: select inputs -> decode -> render -> write.
 
 ## Installation
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+### Windows
+
+This project requires **Python 3.10–3.12**.
+
+> **Important:** Python 3.13+ is currently not supported because the project depends on NumPy `<2.0`. **Python 3.12 is recommended.**
+
+Install **Python 3.12 (64-bit)** from the official Python website:
+
+https://www.python.org/downloads/release/python-31210/
+
+During installation, make sure **Add python.exe to PATH** is enabled.
+
+If you already have other Python versions installed (such as Python 3.13 or 3.14), you do not need to uninstall them.
+
+From the project directory, create the virtual environment using Python 3.12:
+
+```powershell
+py -3.12 -m venv .venv
 ```
 
-Requires **Python 3.10+** (the codebase uses `dataclass(slots=True)`, a
-3.10 feature). On most Linux distributions, Tkinter is a separate system
-package and must be installed alongside Python itself:
+Activate the virtual environment:
 
-```bash
-sudo apt-get install python3-tk    # Debian/Ubuntu
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-Tkinter ships built into the standard Python installer on Windows and
-macOS, no extra step needed there.
+If PowerShell prevents the activation script from running, enable script execution for your current user:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then activate the environment again:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Verify that the virtual environment is using Python 3.12:
+
+```powershell
+python --version
+```
+
+This should show:
+
+```text
+Python 3.12.x
+```
+
+### VS Code
+
+If you are using Visual Studio Code, select the project's virtual environment:
+
+1. Press **Ctrl + Shift + P**.
+2. Select **Python: Select Interpreter**.
+3. Select:
+
+```text
+.venv\Scripts\python.exe
+```
+
+The full path will typically look like:
+
+```text
+C:\path\to\LMT_Overlay_Pipeline\.venv\Scripts\python.exe
+```
+
+### Install dependencies
+
+With the virtual environment activated, install the project dependencies:
+
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Verify the NumPy installation:
+
+```powershell
+python -m pip show numpy
+```
+
+The expected NumPy version is **1.26.x**.
+
+You can also verify that NumPy imports correctly:
+
+```powershell
+python -c "import numpy as np; print('NumPy:', np.__version__); print(np.array([1,2,3]) * 2)"
+```
+
+Expected output:
+
+```text
+NumPy: 1.26.x
+[2 4 6]
+```
+
+### Troubleshooting
+
+If you see a warning such as:
+
+```text
+Numpy built with MINGW-W64 on Windows 64 bits is experimental
+```
+
+check your Python version:
+
+```powershell
+python --version
+```
+
+If you are using Python 3.13 or newer, recreate the virtual environment using Python 3.12:
+
+```powershell
+deactivate
+Remove-Item -Recurse -Force .venv
+
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Then verify:
+
+```powershell
+python --version
+python -m pip show numpy
+```
+
+The expected Python version is **3.12.x**, and NumPy should be **1.26.x**.
 
 ## Usage
 
