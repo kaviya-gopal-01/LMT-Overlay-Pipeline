@@ -93,7 +93,7 @@ def select_database_and_videos() -> Tuple[Path, List[Path]]:
 
         video_path_strs = filedialog.askopenfilenames(
             title="Select one or more raw video files",
-            filetypes=[("Video files", "*.mp4 *.avi *.mov"), ("All files", "*.*")],
+            filetypes=[("Video files", "*.mp4"), ("All files", "*.*")],
             initialdir=initial_video_dir,
             parent=root,
         )
