@@ -48,7 +48,8 @@ Running this launches two file-picker dialogs in order:
 
 1. **Select the LMT SQLite database.**
 2. **Select one or more raw video files** (may span multiple folders, any
-   naming convention, as long as the filename ends in `_t<digits>.<ext>`).
+   naming convention, as long as the filename ends in `_t<digits>.mp4`).
+   Only `.mp4` is supported; other formats are rejected with a clear error.
 
 Every video selected is then processed against the selected database, and
 corrected output is written into a freshly created, timestamped folder:
