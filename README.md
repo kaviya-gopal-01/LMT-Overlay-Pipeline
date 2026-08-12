@@ -729,6 +729,58 @@ with clean, specific exit codes for every failure path.
 
 ---
 
+## Module: `posture_label_diagnostic.py`
+
+### Overview
+A standalone diagnostic script, not part of the `main.py` pipeline and not
+imported by any other module. It answers one question: do
+`DETECTION.REARING`/`LOOK_UP`/`LOOK_DOWN` agree with the `isRearing`/
+`isLookingUp`/`isLookingDown` attributes embedded in that same row's `DATA`
+XML blob? It only reports; it does not decide which source
+`overlay_renderer.py` should use, and it never writes to the database (it
+opens the same read-only connection as the rest of the pipeline, via
+`database.connect()`).
+
+### Inputs
+
+| Input | Type | Purpose |
+|---|---|---|
+| `--db PATH` | CLI flag, optional | Path to the SQLite database. If omitted, a GUI file picker (Tkinter) is shown instead. |
+
+### Outputs
+
+| Output | Type | Purpose |
+|---|---|---|
+| Exit code | `int` | `0` success (report printed, regardless of whether mismatches were found), `1` error (missing file, empty `DETECTION` table, or selection cancelled). |
+| stdout report | text | Rows compared, rows excluded for unparseable/missing XML, mismatch counts by field, and a list of up to the first 50 individual mismatches (frame number, animal ID, field, DB value, XML value). |
+| Log warnings | text | One per row whose `DATA` XML could not be parsed at all (see `xml_parser.XmlParseError`), identifying the frame/animal and the parse error. |
+
+### Processing Steps
+1. **Select the database**: `--db`, or a single-purpose GUI file picker
+   (separate from `gui_selector.py`, which also prompts for videos this
+   script has no use for).
+2. **Open a read-only connection** via `database.connect()`.
+3. **Stream `DETECTION` in chunks** of `config.DB_QUERY_CHUNK_FRAMES`
+   frames (same chunking strategy as `video_processor.py`), so the whole
+   table is never held in memory at once.
+4. **Parse each row's `DATA` XML** via `xml_parser.parse_detection_xml()`.
+   Rows that fail to parse are logged and excluded from the comparison
+   (counted separately, not silently dropped).
+5. **Compare** `REARING`/`LOOK_UP`/`LOOK_DOWN` against
+   `is_rearing`/`is_looking_up`/`is_looking_down` for every successfully
+   parsed row, recording every field-level disagreement with its
+   frame number and animal ID.
+6. **Print a report**: totals, a per-field mismatch breakdown, and a
+   capped list of individual mismatches.
+
+### Do NOT Modify
+- The read-only connection: this script must never be able to write to
+  the database, by design, same as the rest of the pipeline.
+- The "only report, never decide" scope: this script should not be
+  extended to change `overlay_renderer.py`'s posture source itself.
+
+---
+
 ## Consolidated dependency summary
 
 | Dependency | Used by | Required? |
