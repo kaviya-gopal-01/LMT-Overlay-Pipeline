@@ -16,7 +16,7 @@ import logging
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, Iterator, List
+from typing import Iterator, List
 
 import config
 
@@ -100,26 +100,6 @@ def fetch_detections_in_range(conn: sqlite3.Connection, start_frame: int, end_fr
     )
     cursor = conn.execute(query, (start_frame, end_frame))
     return [DetectionRow(row) for row in cursor.fetchall()]
-
-def iter_detection_chunks(conn: sqlite3.Connection, start_frame: int, end_frame: int, chunk_size: int = config.DB_QUERY_CHUNK_FRAMES,) -> Iterator[Dict[int, List[DetectionRow]]]:
-    """Stream detections for [start_frame, end_frame) in fixed-size global
-    frame-number chunks, pre-grouped by FRAMENUMBER for O(1) lookup while
-    iterating video frames. Bounds peak memory to one chunk regardless of
-    recording length."""
-    if chunk_size <= 0:
-        raise ValueError(f"chunk_size must be positive, got {chunk_size}")
-
-    chunk_start = start_frame
-    while chunk_start < end_frame:
-        chunk_end = min(chunk_start + chunk_size, end_frame)
-        rows = fetch_detections_in_range(conn, chunk_start, chunk_end)
-
-        grouped: Dict[int, List[DetectionRow]] = {}
-        for row in rows:
-            grouped.setdefault(row.framenumber, []).append(row)
-
-        yield grouped
-        chunk_start = chunk_end
 
 def get_global_frame_bounds(conn: sqlite3.Connection) -> tuple[int, int]:
     """Return (min_framenumber, max_framenumber) across DETECTION. Used by
