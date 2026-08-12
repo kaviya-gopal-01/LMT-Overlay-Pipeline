@@ -344,19 +344,18 @@ ground-truth database regardless of bugs elsewhere in the codebase.
 
 | Output | Type | Purpose |
 |---|---|---|
-| `DetectionRow` instances | Python objects (`__slots__`) | Attribute-access wrapper around one `DETECTION` row, consumed by `overlay_renderer.py`. |
-| Grouped detection dicts | `Dict[int, List[DetectionRow]]` | Pre-grouped by `FRAMENUMBER` for O(1) lookup while iterating video frames. |
+| `DetectionRow` instances | Python objects (`__slots__`) | Attribute-access wrapper around one `DETECTION` row, consumed by `overlay_renderer.py`. `video_processor.process_single_video()` groups these by `FRAMENUMBER` itself after fetching each chunk. |
 
 ### Processing Steps
 1. **`connect()`** opens a read-only URI connection as a context manager;
    always closed via `finally`, even on error.
 2. **`fetch_detections_in_range()`** runs one bounded SQL query per call
    (`WHERE FRAMENUMBER >= ? AND FRAMENUMBER < ?`), never an unbounded
-   `SELECT *`.
-3. **`iter_detection_chunks()`** wraps repeated calls to the above into a
-   generator yielding pre-grouped dicts, bounding peak memory to one
-   chunk's worth of detections regardless of recording length.
-4. **`warn_if_unindexed()`** checks (via `PRAGMA index_list`) whether
+   `SELECT *`. This is the only detection-fetching function in the
+   module; `video_processor.process_single_video()` calls it directly
+   once per chunk and does its own `FRAMENUMBER`-grouping, rather than
+   going through a separate chunking/grouping wrapper in this module.
+3. **`warn_if_unindexed()`** checks (via `PRAGMA index_list`) whether
    `DETECTION` has an index covering `FRAMENUMBER`, and logs a suggested
    `CREATE INDEX` statement if not, it does not attempt to create one
    itself, since the connection is intentionally read-only.
