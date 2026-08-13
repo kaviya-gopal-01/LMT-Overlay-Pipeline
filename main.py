@@ -65,9 +65,9 @@ def _configure_logging(level_name: str) -> None:
     )
 
 
-def _make_unique_output_dir(base_dir: Path) -> Path:
+def _make_unique_output_dir(base_dir: Path, database_path: Path) -> Path:
     """
-    Build this run's output directory as <base_dir>/<timestamp>. If that
+    Build this run's output directory as <base_dir>/<database_name>_<timestamp>. If that
     exact folder somehow already exists (two runs started within the
     same second -- unlikely but not impossible), append a numeric suffix
     until a free name is found. This is what guarantees "never silently
@@ -75,7 +75,8 @@ def _make_unique_output_dir(base_dir: Path) -> Path:
     already exists.
     """
     timestamp = datetime.now().strftime(config.OUTPUT_TIMESTAMP_FORMAT)
-    candidate = base_dir / timestamp
+    database_name = database_path.stem
+    candidate = base_dir / f"{database_name}_{timestamp}"
     if not candidate.exists():
         return candidate
 
@@ -135,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     config.DATABASE_PATH = database_path
-    config.OUTPUT_VIDEO_DIR = _make_unique_output_dir(args.output_base_dir.resolve())
+    config.OUTPUT_VIDEO_DIR = _make_unique_output_dir(args.output_base_dir.resolve(), database_path)
 
     try:
         config.validate_config()
