@@ -62,18 +62,24 @@ def _hex_tokens_to_bytes(hex_string: str, separator: str) -> bytes:
         raise MaskDecodeError(f"boolMaskData contains a non-hex token: {exc}") from exc
 
 
-def decode_bool_mask(bool_mask_data: str, width: int, height: int, *, strict: bool = config.MASK_STRICT_SIZE_VALIDATION,) -> np.ndarray:
+def decode_bool_mask(bool_mask_data: str, width: int, height: int, *, strict: bool | None = None,) -> np.ndarray:
     """
     Decode a boolMaskData string into a (height, width) uint8 array with
     values in {0, 1}, where 1 marks a foreground (mouse) pixel.
 
     strict:
-        If True (default), a size mismatch or decode failure raises
+        If True, a size mismatch or decode failure raises
         MaskDecodeError. If False, a size mismatch is logged and the
         payload is truncated/zero-padded to fit rather than raising --
         useful for exploratory work, but NOT recommended for production
-        rendering since it can silently misalign a mask.
+        rendering since it can silently misalign a mask. If omitted
+        (None, the default), resolves to config.MASK_STRICT_SIZE_VALIDATION
+        at call time, so a runtime change to that config value is honored
+        without needing to reimport this module.
     """
+    if strict is None:
+        strict = config.MASK_STRICT_SIZE_VALIDATION
+
     if not bool_mask_data or not bool_mask_data.strip():
         raise MaskDecodeError("Empty boolMaskData string.")
     if width <= 0 or height <= 0:
