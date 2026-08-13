@@ -86,6 +86,20 @@ FRAME_NUMBER_MARGIN_PX: int = 10
 OUTPUT_VIDEO_PREFIX: str = "video"
 OUTPUT_FOURCC: str = "mp4v"
 OUTPUT_FPS: float = RAW_VIDEO_FPS
+# FPS sanity check (video_processor.probe_video). Compares each raw
+# video's own reported fps against RAW_VIDEO_FPS -- NOT against
+# OUTPUT_FPS, which stays fixed regardless (see probe_video's
+# docstring). Thresholds are relative to RAW_VIDEO_FPS:
+#   - Below FPS_MISMATCH_WARN_THRESHOLD: no action: within normal
+#     capture-clock/container rounding jitter.
+#   - Between WARN and ERROR: logged as a warning, processing continues:
+#     the file is very likely fine, but worth a human glance.
+#   - Above FPS_MISMATCH_ERROR_THRESHOLD: raises VideoProcessingError,
+#     so the file is skipped rather than silently processed on a
+#     probably-wrong fps assumption (e.g. the wrong raw file selected,
+#     or a re-encoded/re-timed video).
+FPS_MISMATCH_WARN_THRESHOLD: float = 0.02   # 2% -- e.g. 14.7-15.3 fps at nominal 15.0
+FPS_MISMATCH_ERROR_THRESHOLD: float = 0.10  # 10% -- e.g. below 13.5 or above 16.5 fps at nominal 15.0
 
 # GUI file selection
 # Where gui_selector.py persists the last-used database path and last
