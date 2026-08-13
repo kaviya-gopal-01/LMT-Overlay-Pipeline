@@ -114,7 +114,8 @@ def probe_video(video_path: Path) -> VideoInfo:
         raise VideoProcessingError(f"Could not open video: {video_path}")
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS) or config.RAW_VIDEO_FPS
+    measured_fps = cap.get(cv2.CAP_PROP_FPS)
+    fps = measured_fps or config.RAW_VIDEO_FPS
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
@@ -124,8 +125,30 @@ def probe_video(video_path: Path) -> VideoInfo:
     if width <= 0 or height <= 0:
         raise VideoProcessingError(f"Video reports invalid dimensions ({width}x{height}): {video_path}")
 
-    return VideoInfo(path=video_path, start_frame=start_frame, frame_count=frame_count, fps=fps, width=width, height=height,)
+    # Sanity-check the video's own reported fps against the configured
+    # RAW_VIDEO_FPS assumption. This is informational/protective only --
+    # the output writer always uses the fixed config.OUTPUT_FPS
+    # regardless (see process_single_video()), never this measured
+    # value. If cv2 couldn't report an fps at all (measured_fps is 0),
+    # `fps` already fell back to config.RAW_VIDEO_FPS above, so there is
+    # nothing to compare and this check is skipped.
+    if measured_fps:
+        fps_diff_ratio = abs(measured_fps - config.RAW_VIDEO_FPS) / config.RAW_VIDEO_FPS
+        if fps_diff_ratio > config.FPS_MISMATCH_ERROR_THRESHOLD:
+            raise VideoProcessingError(
+                f"Video-reported fps ({measured_fps:.2f}) differs from configured "
+                f"RAW_VIDEO_FPS ({config.RAW_VIDEO_FPS:.2f}) by {fps_diff_ratio:.1%}, "
+                f"exceeding the {config.FPS_MISMATCH_ERROR_THRESHOLD:.0%} error threshold: {video_path}"
+            )
+        elif fps_diff_ratio > config.FPS_MISMATCH_WARN_THRESHOLD:
+            logger.warning(
+                "%s: video-reported fps (%.2f) differs from configured RAW_VIDEO_FPS "
+                "(%.2f) by %.1f%%. Output is still written at the fixed "
+                "config.OUTPUT_FPS (%.2f) regardless; verify this is the intended raw file.",
+                video_path.name, measured_fps, config.RAW_VIDEO_FPS, fps_diff_ratio * 100, config.OUTPUT_FPS,
+            )
 
+    return VideoInfo(path=video_path, start_frame=start_frame, frame_count=frame_count, fps=fps, width=width, height=height,)
 
 def _deduplicate_by_start_frame(videos: List[VideoInfo]) -> List[VideoInfo]:
     """
