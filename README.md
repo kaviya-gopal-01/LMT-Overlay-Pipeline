@@ -595,10 +595,7 @@ that video's own frame range.
 | Corrected `.mp4` files | Video files | Written to `config.OUTPUT_VIDEO_DIR`, named `{prefix}_t{start_frame}{ext}`. |
 
 ### Processing Steps
-1. **Discovery** (`probe_video`): opens a video briefly to read its frame
-   count/fps/dimensions and extracts its global start frame from the
-   filename (`_t<digits>` pattern), then closes it immediately, decoupled
-   from the later processing open.
+1. **Discovery** (`probe_video`): opens a video briefly to read its frame count/fps/dimensions and extracts its global start frame from the filename (_t<digits>pattern), then closes it immediately, decoupled from the later processing open. Also sanity-checks the video's reported fps againstconfig.RAW_VIDEO_FPS: a small mismatch (over FPS_MISMATCH_WARN_THRESHOLD) logs a warning, a large one (over FPS_MISMATCH_ERROR_THRESHOLD) raises and the video is skipped. This never changes the output fps, which stays fixed at config.OUTPUT_FPS.
 2. **Duplicate protection** (`_deduplicate_by_start_frame`): since output
    filenames are keyed only by `start_frame`, two videos sharing one would
    silently overwrite each other's output; this is detected and the second
@@ -644,7 +641,7 @@ that video's own frame range.
 - **Configuration files / environment variables**: none directly; reads
   `config.VIDEO_GLOB_PATTERN`, `config.VIDEO_FILENAME_PATTERN`,
   `config.FRAME_CONVERSION`, `config.DB_QUERY_CHUNK_FRAMES`,
-  `config.OUTPUT_FOURCC`, `config.OUTPUT_FPS`, `config.PROGRESS_BAR`.
+  `config.OUTPUT_FOURCC`, `config.OUTPUT_FPS`, `config.PROGRESS_BAR`, `config.RAW_VIDEO_FPS`, `config.FPS_MISMATCH_WARN_THRESHOLD`, `config.FPS_MISMATCH_ERROR_THRESHOLD`.
 
 ---
 
