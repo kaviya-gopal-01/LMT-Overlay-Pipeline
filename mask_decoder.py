@@ -127,7 +127,15 @@ def decode_bool_mask(bool_mask_data: str, width: int, height: int, *, strict: bo
 
 def to_binary_uint8(mask: np.ndarray) -> np.ndarray:
     """
-    Convert a {0,1}-valued mask into an OpenCV-friendly {0,255} uint8
-    mask, suitable for cv2.findContours / cv2.bitwise_* operations.
+    Convert a {0, config.MASK_FOREGROUND_VALUE}-valued mask into an
+    OpenCV-friendly {0,255} uint8 mask, suitable for cv2.findContours /
+    cv2.bitwise_* operations.
+
+    Uses an explicit equality test against config.MASK_FOREGROUND_VALUE
+    rather than treating the foreground value as a multiplier -- with
+    the default MASK_FOREGROUND_VALUE=1 this produces identical output
+    to a plain `mask * 255`, but it stays correct if that config value
+    is ever anything other than 1 (a plain multiply would silently wrap
+    around uint8's 0-255 range for any foreground value other than 1).
     """
-    return (mask * 255).astype(np.uint8)
+    return np.where(mask == config.MASK_FOREGROUND_VALUE, np.uint8(255), np.uint8(0))
