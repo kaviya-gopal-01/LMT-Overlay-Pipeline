@@ -19,6 +19,8 @@ that hand a file to the next stage. It is a single program (`main.py`) built
 from focused, single-responsibility modules that are all imported and run
 together in one pass: select inputs -> decode -> render -> write. 
 
+Find more information about Live Mouse Tracker (LMT) on its [website](https://micecraft.org/lmt/) and [publication](https://www.nature.com/articles/s41551-019-0396-1.epdf?shared_access_token=8wpLBUUytAaGAtXL96vwIdRgN0jAjWel9jnR3ZoTv0MWp3GqbF86Gf14i30j-gtSG2ayVLmU-s57ZbhM2WJjw18inKlRYt31Cg_hLJbPCqlKdjWBImyT1OrH5tewfPqUthmWceoct6RVAL_Vt8H-Og%3D%3D).
+
 ## Installation
 
 ### Windows
